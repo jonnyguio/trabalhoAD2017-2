@@ -27,14 +27,15 @@ while number_clients < TOTAL_CLIENTS:
     if event.type == EVENT_TYPE_ARRIVAL:
         new_client = Client()
         queue1.push(new_client)
-
-        listEvents.insert(Event(total_time + new_client.generate_service_time(), {"client": new_client}, EVENT_TYPE_END_SERVICE_1))
         listEvents.insert(get_next_arrival(total_time))
 
         number_clients += 1 
         if number_clients > TRANSIENT_STAGE:
             # adiciona no analytics
-        if not server.is_empty():
+        if server.is_empty():
+            server.push(queue1.pop())
+            listEvents.insert(Event(total_time + new_client.generate_service_time(), {"client": new_client}, EVENT_TYPE_END_SERVICE_1))
+        else:
             if server.service_type == 2:
                 # parte onde lida com a interrupção
     elif event.type == EVENT_TYPE_END_SERVICE_1:
@@ -42,15 +43,18 @@ while number_clients < TOTAL_CLIENTS:
         client.end_service_1 = client.start_queue_2 = total_time
         queue2.push(client)
         
-        listEvents.insert(Event(total_time + client.generate_service_time(), {"client": client}, EVENT_TYPE_END_SERVICE_2))
         server.pop()
         if queue1.is_empty():
             if queue2.is_empty():
                 pass
             else:
-                server.push(queue2.pop())
+                next_client = queue1.pop()
+                server.push(next_client)        
+                listEvents.insert(Event(total_time + next_client.generate_service_time(), {"client": client}, EVENT_TYPE_END_SERVICE_2))
         else:
-            server.push(queue1.pop())
+            next_client = queue1.pop()
+            server.push(next_client)
+            listEvents.insert(Event(total_time + next_client.generate_service_time(), {"client": client}, EVENT_TYPE_END_SERVICE_1))
     elif event.type == EVENT_TYPE_END_SERVICE_2:
         client = event.data.client
         client.end_service_2 = total_time 
@@ -59,6 +63,10 @@ while number_clients < TOTAL_CLIENTS:
             if queue2.is_empty():
                 pass
             else:
-                server.push(queue2.pop())
+                next_client = queue1.pop()
+                server.push(next_client)        
+                listEvents.insert(Event(total_time + next_client.generate_service_time(), {"client": client}, EVENT_TYPE_END_SERVICE_2))
         else:
-            server.push(queue1.pop())
+            next_client = queue1.pop()
+            server.push(next_client)
+            listEvents.insert(Event(total_time + next_client.generate_service_time(), {"client": client}, EVENT_TYPE_END_SERVICE_1))
