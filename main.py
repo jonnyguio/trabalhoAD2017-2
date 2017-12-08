@@ -53,7 +53,7 @@ while number_clients < TOTAL_CLIENTS:
             if queue2.is_empty():
                 pass
             else:
-                next_client = queue1.pop()
+                next_client = queue2.pop()
                 server.push(next_client)        
                 listEvents.insert(Event(total_time + next_client.get_service_time(), {"client": next_client}, EVENT_TYPE_END_SERVICE_2))
         else:
@@ -68,7 +68,7 @@ while number_clients < TOTAL_CLIENTS:
             if queue2.is_empty():
                 pass
             else:
-                next_client = queue1.pop()
+                next_client = queue2.pop()
                 server.push(next_client)        
                 listEvents.insert(Event(total_time + next_client.get_service_time(), {"client": next_client}, EVENT_TYPE_END_SERVICE_2))
         else:
