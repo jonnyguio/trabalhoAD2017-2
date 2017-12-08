@@ -21,7 +21,7 @@ class Queue(object):
 	def get_len(self):
 		return len(self.__params["deque"])
 
-	def add(self, client):
+	def push(self, client):
 		self.__params["deque"].append(client)
 
 	def pop(self):

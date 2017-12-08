@@ -26,26 +26,29 @@ while number_clients < TOTAL_CLIENTS:
     log_event(event)
     if event.type == EVENT_TYPE_ARRIVAL:
         new_client = Client()
-        new_client.start_queue_1 = total_time
+        new_client.set_start_queue_1(total_time)
         queue1.push(new_client)
         listEvents.insert(get_next_arrival(total_time))
 
         number_clients += 1 
         if number_clients > TRANSIENT_STAGE:
+        number_clients += 1 
+        if number_clients > TRANSIENT_STAGE:
             analytics.add(new_client)
         if server.is_empty():
-            server.push((Equeue1.pop())
+            server.push(queue1.pop())
             listEvents.insert(total_time + new_client.get_service_time(), {"client": new_client}, EVENT_TYPE_END_SERVICE_1))
         else:
             if server.service_type == 2:
                 client_running = server.pop()
-                client_running.update_service_time(total_time)
+                client_running.update_service_time(listEvents.find({"client": client_running}).start_time - total_time)
                 listEvents.remove({"client": client_running})
                 server.push(queue1.pop())
                 listEvents.insert(Event(total_time + new_client.get_service_time(), {"client": new_client}, EVENT_TYPE_END_SERVICE_1))
     elif event.type == EVENT_TYPE_END_SERVICE_1:
         client = event.data.client
-        client.end_service_1 = client.start_queue_2 = total_time
+        client.set_end_service_1(total_time)
+        client.set_start_queue_2(total_time)
         queue2.push(client)
         
         server.pop()
@@ -62,7 +65,7 @@ while number_clients < TOTAL_CLIENTS:
             listEvents.insert(Event(total_time + next_client.get_service_time(), {"client": next_client}, EVENT_TYPE_END_SERVICE_1))
     elif event.type == EVENT_TYPE_END_SERVICE_2:
         client = event.data.client
-        client.end_service_2 = total_time 
+        client.set_end_service_2(total_time) 
         server.pop()
         if queue1.is_empty():
             if queue2.is_empty():
