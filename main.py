@@ -27,14 +27,15 @@ while number_clients < TOTAL_CLIENTS:
     if event.type == EVENT_TYPE_ARRIVAL:
         new_client = Client()
         queue1.push(new_client)
-
-        listEvents.insert(Event(total_time + new_client.generate_service_time(), {"client": new_client}, EVENT_TYPE_END_SERVICE_1))
         listEvents.insert(get_next_arrival(total_time))
 
         number_clients += 1 
         if number_clients > TRANSIENT_STAGE:
             # adiciona no analytics
-        if not server.is_empty():
+        if server.is_empty():
+            server.push(queue1.pop())
+            listEvents.insert(Event(total_time + new_client.generate_service_time(), {"client": new_client}, EVENT_TYPE_END_SERVICE_1))
+        else:
             if server.service_type == 2:
                 # parte onde lida com a interrupção
     elif event.type == EVENT_TYPE_END_SERVICE_1:
