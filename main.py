@@ -4,7 +4,9 @@
 # DATA STRUCTURES
 from events import Event, EVENT_TYPE_ARRIVAL, EVENT_TYPE_END_SERVICE_1, EVENT_TYPE_PREEMPTION
 from queue import Queue
+from generator import Generator
 
+TOTAL_ROUNDS = 10
 TOTAL_CLIENTS = 10000
 TRANSIENT_STAGE = 1000
 
@@ -17,66 +19,68 @@ queue1 = Queue()
 queue2 = Queue()
 
 total_time = 0
+idle_time = 0
 
-while number_clients < TOTAL_CLIENTS:
-    event = listEvents.pop() # pega o minimo da lista (proximo evento)
-    if event is None:
-        event = get_next_arrival(total_time)
-    total_time = event.start_time
-    log_event(event)
-    if event.type == EVENT_TYPE_ARRIVAL:
-        new_client = Client()
-        new_client.set_start_queue_1(total_time)
-        queue1.push(new_client)
-        listEvents.insert(get_next_arrival(total_time))
+while rounds < TOTAL_ROUNDS:
+    while number_clients < TOTAL_CLIENTS:
+        event = listEvents.pop() # pega o minimo da lista (proximo evento)
+        if event is None:
+            event = Generator.next_arrival_event(total_time)
+            idle_time += event.start_time - total_time
+        total_time = event.start_time
+        log_event(event)
+        if event.type == EVENT_TYPE_ARRIVAL:
+            new_client = Client(total_time)
+            queue1.push(new_client)
+            listEvents.insert(Generator.next_arrival_event(total_time))
 
-        number_clients += 1 
-        if number_clients > TRANSIENT_STAGE:
-        number_clients += 1 
-        if number_clients > TRANSIENT_STAGE:
-            analytics.add(new_client)
-        if server.is_empty():
-            server.push(queue1.pop())
-            listEvents.insert(total_time + new_client.get_service_time(), {"client": new_client}, EVENT_TYPE_END_SERVICE_1))
-        else:
-            if server.service_type == 2:
-                client_running = server.pop()
-                client_running.update_service_time(listEvents.find({"client": client_running}).start_time - total_time)
-                listEvents.remove({"client": client_running})
+            number_clients += 1 
+            if number_clients > TRANSIENT_STAGE:
+                analytics.add(new_client)
+            if server.is_empty():
                 server.push(queue1.pop())
-                listEvents.insert(Event(total_time + new_client.get_service_time(), {"client": new_client}, EVENT_TYPE_END_SERVICE_1))
-    elif event.type == EVENT_TYPE_END_SERVICE_1:
-        client = event.data.client
-        client.set_end_service_1(total_time)
-        client.set_start_queue_2(total_time)
-        queue2.push(client)
-        
-        server.pop()
-        if queue1.is_empty():
-            if queue2.is_empty():
-                pass
+                listEvents.insert(total_time + new_client.get_service_time_1(), {"client": new_client}, EVENT_TYPE_END_SERVICE_1))
             else:
-                next_client = queue2.pop()
-                server.push(next_client)        
-                listEvents.insert(Event(total_time + next_client.get_service_time(), {"client": next_client}, EVENT_TYPE_END_SERVICE_2))
-        else:
-            next_client = queue1.pop()
-            server.push(next_client)
-            listEvents.insert(Event(total_time + next_client.get_service_time(), {"client": next_client}, EVENT_TYPE_END_SERVICE_1))
-    elif event.type == EVENT_TYPE_END_SERVICE_2:
-        client = event.data.client
-        client.set_end_service_2(total_time) 
-        server.pop()
-        if queue1.is_empty():
-            if queue2.is_empty():
-                pass
-            else:
-                next_client = queue2.pop()
-                server.push(next_client)        
-                listEvents.insert(Event(total_time + next_client.get_service_time(), {"client": next_client}, EVENT_TYPE_END_SERVICE_2))
-        else:
-            next_client = queue1.pop()
-            server.push(next_client)
-            listEvents.insert(Event(total_time + next_client.get_service_time(), {"client": next_client}, EVENT_TYPE_END_SERVICE_1))
+                if server.service_type == 2:
+                    client_running = server.pop()
+                    client_running.update_residual_time(listEvents.find({"client": client_running}).start_time - total_time)
+                    listEvents.remove({"client": client_running})
 
+                    server.push(queue1.pop())
+                    listEvents.insert(Event(total_time + new_client.get_service_time(), {"client": new_client}, EVENT_TYPE_END_SERVICE_1))
+        
+        elif event.type == EVENT_TYPE_END_SERVICE_1:
+            client = event.data.client
+            client.set_end_service_1(total_time)
+            client.set_start_queue_2(total_time)
+            queue2.push(client)
+            
+            server.pop()
+            if queue1.is_empty():
+                if queue2.is_empty():
+                    pass
+                else:
+                    next_client = queue2.pop()
+                    server.push(next_client)        
+                    listEvents.insert(Event(total_time + next_client.get_service_time_2(), {"client": next_client}, EVENT_TYPE_END_SERVICE_2))
+            else:
+                next_client = queue1.pop()
+                server.push(next_client)
+                listEvents.insert(Event(total_time + next_client.get_service_time_1(), {"client": next_client}, EVENT_TYPE_END_SERVICE_1))
+        elif event.type == EVENT_TYPE_END_SERVICE_2:
+            client = event.data.client
+            client.set_end_service_2(total_time) 
+            server.pop()
+            if queue1.is_empty():
+                if queue2.is_empty():
+                    pass
+                else:
+                    next_client = queue2.pop()
+                    server.push(next_client)        
+                    listEvents.insert(Event(total_time + next_client.get_service_time_2(), {"client": next_client}, EVENT_TYPE_END_SERVICE_2))
+            else:
+                next_client = queue1.pop()
+                server.push(next_client)
+                listEvents.insert(Event(total_time + next_client.get_service_time_1(), {"client": next_client}, EVENT_TYPE_END_SERVICE_1))
+    analytics.run_round()
 analytics.run()
