@@ -11,6 +11,10 @@ class Event:
         self.start_time = start_time
         self.next = None
     
+    #função de comparação para ordenar na heap
+    def __lt__(self, other):
+        return self.start_time < other.start_time
+    
     def set_next(self, n_next):
         self.next = n_next
     
@@ -35,7 +39,7 @@ class Event:
         else:
             event_list_begin.set_next(new_event)
     
-    def pop_event(event_list_begin)
+    def pop_event(event_list_begin):
         event = event_list_begin
         event_list_begin = event_list_begin.get_next()
         return event.data, event.type, event.start_time
