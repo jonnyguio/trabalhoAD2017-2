@@ -40,6 +40,7 @@ while number_clients < TOTAL_CLIENTS:
                 client_running = server.pop()
                 client_running.update_service_time(total_time)
                 listEvents.remove({"client": client_running})
+                server.push(queue1.pop())
                 listEvents.insert(Event(total_time + new_client.get_service_time(), {"client": new_client}, EVENT_TYPE_END_SERVICE_1))
     elif event.type == EVENT_TYPE_END_SERVICE_1:
         client = event.data.client
