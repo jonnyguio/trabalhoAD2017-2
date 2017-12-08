@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 EVENT_TYPE_ARRIVAL = "ARRIVAL"
 EVENT_TYPE_END_SERVICE = "END_OF_SERVICE"
 
