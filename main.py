@@ -26,6 +26,7 @@ while number_clients < TOTAL_CLIENTS:
     log_event(event)
     if event.type == EVENT_TYPE_ARRIVAL:
         new_client = Client()
+        new_client.start_queue_1 = total_time
         queue1.push(new_client)
         listEvents.insert(get_next_arrival(total_time))
 
@@ -33,13 +34,14 @@ while number_clients < TOTAL_CLIENTS:
         if number_clients > TRANSIENT_STAGE:
             analytics.add(new_client)
         if server.is_empty():
-            server.push(queue1.pop())
-            listEvents.insert(Event(total_time + new_client.get_service_time(), {"client": new_client}, EVENT_TYPE_END_SERVICE_1))
+            server.push((Equeue1.pop())
+            listEvents.insert(total_time + new_client.get_service_time(), {"client": new_client}, EVENT_TYPE_END_SERVICE_1))
         else:
             if server.service_type == 2:
                 client_running = server.pop()
                 client_running.update_service_time(total_time)
                 listEvents.remove({"client": client_running})
+                server.push(queue1.pop())
                 listEvents.insert(Event(total_time + new_client.get_service_time(), {"client": new_client}, EVENT_TYPE_END_SERVICE_1))
     elif event.type == EVENT_TYPE_END_SERVICE_1:
         client = event.data.client
