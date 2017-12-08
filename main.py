@@ -3,6 +3,7 @@
 
 # DATA STRUCTURES
 from events import Event, EVENT_TYPE_ARRIVAL, EVENT_TYPE_END_SERVICE_1, EVENT_TYPE_PREEMPTION
+from heapq import heappush, heappop
 from queue import Queue
 from generator import Generator
 
