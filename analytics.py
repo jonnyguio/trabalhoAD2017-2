@@ -82,6 +82,8 @@ class Analytics():
         self.__new_metrics["E[W1]"] /= float(self.__total_samples)
         self.__new_metrics["E[T2]"] /= float(self.__total_samples)
         self.__new_metrics["E[W2]"] /= float(self.__total_samples)
+        self.__new_metrics["V[W1]"] = self.__new_metrics["V[W1]"] / float(self.__total_samples) - self.__new_metrics["E[W1]"]**2
+        self.__new_metrics["V[W2]"] = self.__new_metrics["V[W2]"] / float(self.__total_samples) - self.__new_metrics["E[W2]"]**2
         self.__metrics.append(self.__new_metrics.copy())
         self.__new_metrics["E[Nq1]"] = 0.0
         self.__new_metrics["E[Nq2]"] = 0.0
@@ -91,6 +93,8 @@ class Analytics():
         self.__new_metrics["E[W1]"] = 0.0
         self.__new_metrics["E[T2]"] = 0.0
         self.__new_metrics["E[W2]"] = 0.0
+        self.__new_metrics["V[W1]"] = 0.0
+        self.__new_metrics["V[W2]"] = 0.0
 
     def get_metrics(self):
         return self.__metrics
@@ -104,10 +108,12 @@ class Analytics():
     def add_sample_end_1(self, client):
         self.__new_metrics["E[T1]"] += client.get_end_service_1() - client.get_start_queue_1()
         self.__new_metrics["E[W1]"] += client.get_end_service_1() - client.get_start_queue_1() - client.get_service_time_1()
+        self.__new_metrics["V[W1]"] += (client.get_end_service_1() - client.get_start_queue_1() - client.get_service_time_1())**2
     
     def add_sample_end_2(self, client):
         self.__new_metrics["E[T2]"] += client.get_end_service_2() - client.get_start_queue_2()
         self.__new_metrics["E[W2]"] += client.get_end_service_2() - client.get_start_queue_2() - client.get_total_service_time_2()
+        self.__new_metrics["V[W2]"] += (client.get_end_service_2() - client.get_start_queue_2() - client.get_total_service_time_2())**2
 
         
     # def __add_round(self):
