@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from generator import Generator
-
 class Client(object):
 	"""docstring for Queue"""
 	end_service_1 = None
@@ -15,12 +13,12 @@ class Client(object):
 
 	random_generator = None
 
-	def __init__(self, time_in, color):
+	def __init__(self, time_in, color="green"):
 		super(Client, self).__init__()
 		self.start_queue_1 = time_in
 		self.color = color
-		self.service_time_1 = Generator.random_service_time()
-		self.service_time_2 = Generator.random_service_time()
+		# self.service_time_1 = Generator.random_service_time()
+		# self.service_time_2 = Generator.random_service_time()
 	
 	def set_end_service_1(self, n_end_service_1):
 		self.end_service_1 = n_end_service_1
@@ -52,10 +50,8 @@ class Client(object):
 	def get_service_time_2(self):
 		return self.service_time_2
 
-	# unico que tem vida residual será o 2, pois poderá ser interrompido.
-	# o serviço 1 sempre é executado por completo.
-	def update_residual_service(self, time):
-		self.service_time_2 = time
+	def set_service_time_1(self, time):
+		self.service_time_1 = time
 
-	def generate_random_service_time():
-		pass
+	def set_service_time_2(self, time):
+		self.service_time_2 = time
