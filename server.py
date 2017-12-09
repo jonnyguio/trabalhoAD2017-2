@@ -33,6 +33,8 @@ class Server(object):
 		return self.__params["deque"].pop()
 
 	def service_type(self):
-		if self.__params["deque"][0].get_start_queue_2() == None:
+		if len(self.__params["deque"]) == 0:
+			return 0
+		elif self.__params["deque"][0].get_start_queue_2() == None:
 			return 1
 		return 2

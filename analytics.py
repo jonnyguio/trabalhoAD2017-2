@@ -26,6 +26,7 @@ class Analytics():
         self.__final_metrics = {}
         self.__people_on_queue1 = []
         self.__people_on_queue2 = []
+        self.__service_type = []
 
     def add_people_on_queue1(self, new_count):
         self.__people_on_queue1.append(new_count)
@@ -36,6 +37,11 @@ class Analytics():
         self.__people_on_queue2.append(new_count)
     def get_people_on_queue2(self):
         return self.__people_on_queue2
+
+    def add_service_type(self, new_server_type):
+        self.__service_type.append(new_server_type)
+    def get_service_type(self):
+        return self.__service_type
 
     def add(self, new_client):
         self.clients_list.append(new_client)
@@ -76,4 +82,6 @@ class Analytics():
         new_metrics["E[W2]"] = np.mean([client.get_end_service_2() - client.get_start_queue_2() - client.get_total_service_time_2() for client in self.clients_list])
         new_metrics["E[Nq1]"] = np.mean(self.__people_on_queue1)
         new_metrics["E[Nq2]"] = np.mean(self.__people_on_queue2)
+        new_metrics["E[N1]"] = np.mean([people + 1 if self.__service_type[index] == 1 else people for index, people in enumerate(self.__people_on_queue1)])
+        new_metrics["E[N2]"] = np.mean([people + 1 if self.__service_type[index] == 2 else people for index, people in enumerate(self.__people_on_queue2)])
         return new_metrics

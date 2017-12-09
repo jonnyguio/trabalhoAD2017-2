@@ -125,6 +125,7 @@ def deal_event(event):
         # Como todo evento de chegada poisson é uma amostragem aleatória, pegamos a quantidade de pessoas na fila para usarmos no cálculo da média.
         analytics.add_people_on_queue1(queue1.get_len())
         analytics.add_people_on_queue2(queue2.get_len())
+        analytics.add_service_type(server.service_type())
 
         #cria o cliente que chegará no tempo marcado no evento
         new_client = Client( total_time )
