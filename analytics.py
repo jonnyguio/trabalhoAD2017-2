@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+import pandas as pd
 
 class Analytics():
 
@@ -27,6 +28,10 @@ class Analytics():
         self.__people_on_queue1 = []
         self.__people_on_queue2 = []
         self.__service_type = []
+        self.__pd = []
+
+    def __str__(self):
+        return self.__pd.__str__()
 
     def add_people_on_queue1(self, new_count):
         self.__people_on_queue1.append(new_count)
@@ -62,6 +67,7 @@ class Analytics():
         final_metrics["V[W1]"] = np.mean([metric["V[W1]"] for metric in self.__metrics])
         final_metrics["V[W2]"] = np.mean([metric["V[W2]"] for metric in self.__metrics])
         self.__final_metrics = final_metrics
+        self.__pd = pd.DataFrame(final_metrics.items())
         return final_metrics
 
     def run_round(self):
