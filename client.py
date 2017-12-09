@@ -8,6 +8,7 @@ class Client(object):
     start_queue_2 = None
     service_time_1 = None
     service_time_2 = None
+    total_service_time_2 = None
 
     color = None
 
@@ -48,7 +49,11 @@ class Client(object):
     	self.service_time_1 = time
 
 
+    def get_total_service_time_2(self):
+        return self.total_service_time_2
     def get_service_time_2(self):
         return self.service_time_2
     def set_service_time_2(self, time):
+        if self.total_service_time_2 == None:
+            self.total_service_time_2 = time
     	self.service_time_2 = time
