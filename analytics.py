@@ -5,6 +5,15 @@ class Analytics():
 
     __metrics_base = {
         "E[T1]": 0,
+        "E[W1]": 0,
+        "E[N1]": 0,
+        "E[Nq1]": 0,
+        "E[T2]": 0,
+        "E[W2]": 0,
+        "E[N2]": 0,
+        "E[Nq2]": 0,
+        "V[W1]": 0,
+        "V[W2]": 0
     }
 
     def __init__(self):
