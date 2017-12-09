@@ -2,7 +2,7 @@
 # CONSTANTS
 
 # DATA STRUCTURES
-from events import Event, EVENT_TYPE_ARRIVAL, EVENT_TYPE_END_SERVICE_1, EVENT_TYPE_PREEMPTION
+from events import Event, EVENT_TYPE_ARRIVAL, EVENT_TYPE_END_SERVICE_1, EVENT_TYPE_END_SERVICE_2, EVENT_TYPE_PREEMPTION
 from heapq import heappush, heappop
 from queue import Queue
 from generator import Generator
@@ -43,12 +43,7 @@ while rounds < TOTAL_ROUNDS:
                 listEvents.insert(total_time + new_client.get_service_time_1(), {"client": new_client}, EVENT_TYPE_END_SERVICE_1))
             else:
                 if server.service_type == 2:
-                    client_running = server.pop()
-                    client_running.update_residual_time(listEvents.find({"client": client_running}).start_time - total_time)
-                    listEvents.remove({"client": client_running})
-
-                    server.push(queue1.pop())
-                    listEvents.insert(Event(total_time + new_client.get_service_time(), {"client": new_client}, EVENT_TYPE_END_SERVICE_1))
+                    listEvents.insert(Event(total_time, None, EVENT_TYPE_PREEMPTION))
         
         elif event.type == EVENT_TYPE_END_SERVICE_1:
             client = event.data.client
@@ -83,5 +78,12 @@ while rounds < TOTAL_ROUNDS:
                 next_client = queue1.pop()
                 server.push(next_client)
                 listEvents.insert(Event(total_time + next_client.get_service_time_1(), {"client": next_client}, EVENT_TYPE_END_SERVICE_1))
+        elif event.type == EVENT_TYPE_PREEMPTION:
+            client_running = server.pop()
+            client_running.update_residual_time(listEvents.find({"client": client_running}).start_time - total_time)
+            listEvents.remove({"client": client_running})
+
+            server.push(queue1.pop())
+            listEvents.insert(Event(total_time + new_client.get_service_time(), {"client": new_client}, EVENT_TYPE_END_SERVICE_1))
     analytics.run_round()
 analytics.run()
