@@ -47,12 +47,32 @@ def push_k_arrival_events(time_in, time_out):
         push_event(listEvents, event_arrival)
 
 #método que pega o próximo cliente, coloca no servidor e cria o evento indicando
-def set_client_on_server(queue, server):
-    next_client = queue.pop()
+def set_client_1_on_server():
+    next_client = queue1.pop()
     server.push(next_client)
 
-    event_end_service_1 = generator.end_service_1_event(total_time, next_client)
-    push_event(listEvents, event_end_service_1)
+    event_end_service = generator.end_service_1_event(total_time, next_client)
+    push_event(listEvents, event_end_service)
+    
+    # falta adicionar todos os eventos de chegadas que devem existir
+    # como o time_temp será incrementado, não queremos passar total_time como referência
+    time_in = total_time
+    time_out = event_end_service.start_time
+    push_k_arrival_events(time_in, time_out)
+
+def set_client_2_on_server():
+    next_client = queue2.pop()
+    server.push(next_client)
+
+    event_end_service = generator.end_service_2_event(total_time, next_client)
+    push_event(listEvents, event_end_service)
+    
+    # falta adicionar todos os eventos de chegadas que devem existir
+    # como o time_temp será incrementado, não queremos passar total_time como referência
+    time_in = total_time
+    time_out = event_end_service.start_time
+    push_k_arrival_events(time_in, time_out)
+
 
 def deal_event(event):
     #caso o evento seja do tipo arrival, temos duas possibilidades, atender o usuário ou colocá-lo na fila
@@ -74,13 +94,7 @@ def deal_event(event):
         #caso o servidor esteja livre, colocaremos este cliente no servidor
         if server.is_empty():
             #move o cliente da fila para o servidor e cria o evento de término do serviço
-            set_client_on_server(queue1, server)
-
-            # falta adicionar todos os eventos de chegadas que devem existir
-            # como o time_temp será incrementado, não queremos passar total_time como referência
-            time_in = total_time
-            time_out = event_end_service_1.start_time
-            push_k_arrival_events(time_in, time_out)
+            set_client_1_on_server()
 
         #caso o servidor esteja ocupado, nada acontecerá caso seja o cliente 1, caso seja o cliente 2, ele sofrerá preempção
         elif server.service_type == 2:
@@ -97,44 +111,39 @@ def deal_event(event):
             #remova o evento do serviço do tipo 2 da heap de eventos
             listEvents = filter(lambda event: event.n_type != EVENT_TYPE_END_SERVICE_2, listEvents)
 
-            #adiciona um novo evento de chegada 
-            
-            ---------------------------------------------------------------------------------
-            ---------------------------------------------------------------------------------
-
             #move o cliente da fila para o servidor e cria o evento de término do serviço
-            set_client_on_server(queue1, server)
+            set_client_on_1_server()
 
     # caso o evento seja o fim do serviço 1, temos que colocá-lo na fila2, atender o próximo ou ficar ocioso
     # o cliente 1 com certeza estará no servidor
     elif event.type == EVENT_TYPE_END_SERVICE_1:
-            #vamos tirar o cliente do servidor, colocá-lo na segunda fila e setar o tempo global dele
-            client = server.pop()
-            client.set_end_service_1(total_time)
-            client.set_start_queue_2(total_time)
-            queue2.push(client)
+        #vamos tirar o cliente do servidor, colocá-lo na segunda fila e setar o tempo global dele
+        client = server.pop()
+        client.set_end_service_1(total_time)
+        client.set_start_queue_2(total_time)
+        queue2.push(client)
 
-            #caso a fila 1 esteja, vamos atender o próximo da fila 2
-            #repare que sempre terá pelo menos uma pessoa na fila 2 nesse momento
-            if queue1.is_empty():
-                #move o cliente da fila para o servidor e cria o evento de término do serviço
-                set_client_on_server(queue2, server)     
+        #caso a fila 1 esteja, vamos atender o próximo da fila 2
+        #repare que sempre terá pelo menos uma pessoa na fila 2 nesse momento
+        if queue1.is_empty():
+            #move o cliente da fila para o servidor e cria o evento de término do serviço
+            set_client_2_on_server(queue2, server)     
 
-            #caso a fila 1 tenha alguém, vamos pegar o próximo da fila 1
-            else:
-                #move o cliente da fila para o servidor e cria o evento de término do serviço
-                set_client_on_server(queue1, server)
+        #caso a fila 1 tenha alguém, vamos pegar o próximo da fila 1
+        else:
+            #move o cliente da fila para o servidor e cria o evento de término do serviço
+            set_client_1_on_server(queue1, server)
 
-        elif event.type == EVENT_TYPE_END_SERVICE_2:
-            client = server.pop()
-            client.set_end_service_2(total_time)
+    elif event.type == EVENT_TYPE_END_SERVICE_2:
+        client = server.pop()
+        client.set_end_service_2(total_time)
 
-            if queue1.is_empty() and not queue2.is_empty():
-                #move o cliente da fila para o servidor e cria o evento de término do serviço
-                set_client_on_server(queue2, server)
-            else:
-                #move o cliente da fila para o servidor e cria o evento de término do serviço
-                set_client_on_server(queue1, server)
+        if queue1.is_empty() and not queue2.is_empty():
+            #move o cliente da fila para o servidor e cria o evento de término do serviço
+            set_client_2_on_server(queue2, server)
+        else:
+            #move o cliente da fila para o servidor e cria o evento de término do serviço
+            set_client_1_on_server(queue1, server)
         
 
 
