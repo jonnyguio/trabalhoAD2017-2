@@ -1,16 +1,22 @@
 # -*- coding: utf-8 -*-
+import math
+import random
+import time
 import numpy as np
 from events import Event, EVENT_TYPE_ARRIVAL, EVENT_TYPE_END_SERVICE1, EVENT_TYPE_END_SERVICE2
 
 class Generator:
-    def __init__(self, lamb, mu):
+    def __init__(self, lamb, mu, seed=time.time()):
+        random.seed = seed
         self.__betha = [1./lamb, 1./mu]
 
     def arrival_time(self):
-        return np.random.exponential(scale=self.__betha[0], size=None)
+        return -math.log(random.random()) * self.__betha[0]
+        # return np.random.exponential(scale=self.__betha[0], size=None)
 
     def end_service_time(self):
-        return np.random.exponential(scale=self.__betha[1], size=None)
+        return -math.log(random.random()) * self.__betha[1]
+        # return np.random.exponential(scale=self.__betha[1], size=None)
     
     def arrival_event(self, time):
         time_sample = self.arrival_time()
