@@ -9,7 +9,7 @@ class Queue(object):
 		self.__queue_type = queue_type
 		self.__params = self.make_params_dict(clt.deque())
 
-	def make_params_dict(deque):
+	def make_params_dict(self, deque):
 		return dict(zip(
 			["deque"],
 			[deque]
@@ -20,6 +20,9 @@ class Queue(object):
 
 	def get_len(self):
 		return len(self.__params["deque"])
+
+	def is_empty(self):
+		return self.get_len() == 0
 
 	def push(self, client):
 		self.__params["deque"].append(client)
