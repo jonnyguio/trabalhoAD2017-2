@@ -4,7 +4,7 @@ EVENT_TYPE_END_SERVICE1 = "END_OF_SERVICE1"
 EVENT_TYPE_END_SERVICE2 = "END_OF_SERVICE2"
 EVENT_TYPE_PREEMPTION = "PREEMPTION"
 
-class Event:
+class Event(object):
     def __init__(self, start_time, n_type):
         self.__start_time = start_time
         self.__type = n_type
@@ -18,3 +18,6 @@ class Event:
         
     def get_start_time(self):
         return self.__start_time
+
+    def get_type(self):
+        return self.__type
