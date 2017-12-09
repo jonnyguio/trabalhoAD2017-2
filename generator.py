@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from events import Event, EVENT_TYPE_ARRIVAL, EVENT_TYPE_END_SERVICE_1, EVENT_TYPE_PREEMPTION
+from events import Event, EVENT_TYPE_ARRIVAL, EVENT_TYPE_END_SERVICE_1, EVENT_TYPE_END_SERVICE_2
 
 class Generator:
     def __init__(self, lamb, mu1, mu2):
-        self.__betha = [1./lamb, 1./mu1, 1./mu2]
+        self.__betha = [1./lamb, 1./mu1]
 
     def arrival_time(self):
         return np.random.exponential(scale=self.__betha[0], size=None)
@@ -13,7 +13,7 @@ class Generator:
         return np.random.exponential(scale=self.__betha[1], size=None)
 
     def end_service_2_time(self):
-        return np.random.exponential(scale=self.__betha[2], size=None)
+        return np.random.exponential(scale=self.__betha[1], size=None)
     
     def arrival_event(self, time):
         time_sample = self.arrival_time()

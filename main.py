@@ -2,7 +2,7 @@
 # CONSTANTS
 
 # DATA STRUCTURES
-from events import Event, EVENT_TYPE_ARRIVAL, EVENT_TYPE_END_SERVICE_1, EVENT_TYPE_PREEMPTION
+from events import Event, EVENT_TYPE_ARRIVAL, EVENT_TYPE_END_SERVICE_1, EVENT_TYPE_END_SERVICE_2, EVENT_TYPE_PREEMPTION
 from heapq import heappush, heappop
 from queue import Queue
 from generator import Generator
@@ -94,6 +94,7 @@ def deal_event(event):
 
                 #coloque o cliente 1 no servidor
                 server.push(queue1.pop())
+<<<<<<< HEAD
 
                 #cria o evento que diz quando o serviço irá terminar
                 event_end_service_1 = generator.end_service_1_event(total_time, client)
@@ -101,6 +102,14 @@ def deal_event(event):
 
     # Falta refatorar a partir daqui: -----------------------------------------------------------------------------------------
     elif event.type == EVENT_TYPE_END_SERVICE_1:
+=======
+                listEvents.insert(total_time + new_client.get_service_time_1(), {"client": new_client}, EVENT_TYPE_END_SERVICE_1))
+            else:
+                if server.service_type == 2:
+                    listEvents.insert(Event(total_time, None, EVENT_TYPE_PREEMPTION))
+        
+        elif event.type == EVENT_TYPE_END_SERVICE_1:
+>>>>>>> c455a67bc49d62d2e419fc4d67902c45ad3077df
             client = event.data.client
             client.set_end_service_1(total_time)
             client.set_start_queue_2(total_time)
@@ -133,6 +142,7 @@ def deal_event(event):
                 next_client = queue1.pop()
                 server.push(next_client)
                 listEvents.insert(Event(total_time + next_client.get_service_time_1(), {"client": next_client}, EVENT_TYPE_END_SERVICE_1))
+<<<<<<< HEAD
         
 
 
@@ -150,5 +160,14 @@ while rounds < TOTAL_ROUNDS:
 
         deal_event(event, total_time)
 
+=======
+        elif event.type == EVENT_TYPE_PREEMPTION:
+            client_running = server.pop()
+            client_running.update_residual_time(listEvents.find({"client": client_running}).start_time - total_time)
+            listEvents.remove({"client": client_running})
+
+            server.push(queue1.pop())
+            listEvents.insert(Event(total_time + new_client.get_service_time(), {"client": new_client}, EVENT_TYPE_END_SERVICE_1))
+>>>>>>> c455a67bc49d62d2e419fc4d67902c45ad3077df
     analytics.run_round()
 analytics.run()
