@@ -236,8 +236,9 @@ def simulate():
         # print(analytics.get_metrics())
         rounds += 1
     analytics.run()
-    print(analytics.get_metrics())
-    print(analytics.get_final_metrics())
+    print(analytics)
+    # print(analytics.get_metrics())
+    # print(analytics.get_final_metrics())
 
 if __name__ == '__main__':
     simulate()
