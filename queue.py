@@ -24,6 +24,9 @@ class Queue(object):
 	def push(self, client):
 		self.__params["deque"].append(client)
 
+	def pushleft(self, client):
+		self.__params["deque"].appendleft(client)
+
 	def pop(self):
 		if len(self.__params["deque"]) == 0:
 			return None

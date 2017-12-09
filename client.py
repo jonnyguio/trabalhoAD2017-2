@@ -17,8 +17,6 @@ class Client(object):
 		super(Client, self).__init__()
 		self.start_queue_1 = time_in
 		self.color = color
-		# self.service_time_1 = Generator.random_service_time()
-		# self.service_time_2 = Generator.random_service_time()
 	
 	def set_end_service_1(self, n_end_service_1):
 		self.end_service_1 = n_end_service_1

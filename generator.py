@@ -23,4 +23,4 @@ class Generator:
         return Event(time + client.get_service_time_1(), EVENT_TYPE_END_SERVICE_1)
 
     def end_service_2_event(self, time, client):
-        return Event(time + client.get_service_time_2(), EVENT_TYPE_PREEMPTION)
+        return Event(time + client.get_service_time_2(), EVENT_TYPE_END_SERVICE_2)
