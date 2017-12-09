@@ -2,12 +2,14 @@
 # CONSTANTS
 
 # DATA STRUCTURES
-from events import Event, EVENT_TYPE_ARRIVAL, EVENT_TYPE_END_SERVICE_1, EVENT_TYPE_END_SERVICE_2, EVENT_TYPE_PREEMPTION
+from events import Event, EVENT_TYPE_ARRIVAL, EVENT_TYPE_END_SERVICE_1, EVENT_TYPE_END_SERVICE_2
 from heapq import heappush, heappop
 from queue import Queue
 from generator import Generator
 from copy import deepcopy
 
+
+# GLOBAL VARIABLES
 TOTAL_ROUNDS = 10
 TOTAL_CLIENTS = 10000
 TRANSIENT_STAGE = 1000
@@ -24,9 +26,7 @@ generator = Generator()
 total_time = 0
 idle_time = 0
 
-def create_client(time1=None, time=None):
-
-
+#HELPER FUNCTIONS
 def pop_event(listEvents):
     if len(listEvents) == 0:
         return None
@@ -45,6 +45,14 @@ def push_k_arrival_events(time_in, time_out):
         time_temp = event_arrival.start_time
         event_arrival = generator.arrival_event(time_temp)
         push_event(listEvents, event_arrival)
+
+#método que pega o próximo cliente, coloca no servidor e cria o evento indicando
+def set_client_on_server(queue, server):
+    next_client = queue.pop()
+    server.push(next_client)
+
+    event_end_service_1 = generator.end_service_1_event(total_time, next_client)
+    push_event(listEvents, event_end_service_1)
 
 def deal_event(event):
     #caso o evento seja do tipo arrival, temos duas possibilidades, atender o usuário ou colocá-lo na fila
@@ -65,13 +73,8 @@ def deal_event(event):
 
         #caso o servidor esteja livre, colocaremos este cliente no servidor
         if server.is_empty():
-            #move o cliente da fila para o servidor
-            client = queue1.pop()
-            server.push(client)
-
-            #cria o evento que diz quando o serviço irá terminar
-            event_end_service_1 = generator.end_service_1_event(total_time, client)
-            push_event(listEvents, event_end_service_1)
+            #move o cliente da fila para o servidor e cria o evento de término do serviço
+            set_client_on_server(queue1, server)
 
             # falta adicionar todos os eventos de chegadas que devem existir
             # como o time_temp será incrementado, não queremos passar total_time como referência
@@ -80,69 +83,58 @@ def deal_event(event):
             push_k_arrival_events(time_in, time_out)
 
         #caso o servidor esteja ocupado, nada acontecerá caso seja o cliente 1, caso seja o cliente 2, ele sofrerá preempção
-        else:
-            if server.service_type == 2:
-                #retira o cliente 2 do servidor
-                client_running = server.pop()
+        elif server.service_type == 2:
+            #retira o cliente 2 do servidor
+            client_running = server.pop()
 
-                #atualiza o tempo de serviço pelo residual
-                event = filter(lambda event: event.n_type == EVENT_TYPE_PREEMPTION, listEvents)
-                client_running.set_service_time_2(event.start_time - total_time)
+            #atualiza o tempo de serviço pelo residual
+            event = filter(lambda event: event.n_type == EVENT_TYPE_END_SERVICE_2, listEvents)
+            client_running.set_service_time_2(event.start_time - total_time)
 
-                #remova o evento do serviço do tipo 2 da heap de eventos
-                listEvents = filter(lambda event: event.n_type != EVENT_TYPE_PREEMPTION, listEvents)
+            #coloque o cliente que estava no servidor no inicio da fila 2
+            queue2.pushleft(client_running)
 
-                #coloque o cliente 1 no servidor
-                server.push(queue1.pop())
-<<<<<<< HEAD
+            #remova o evento do serviço do tipo 2 da heap de eventos
+            listEvents = filter(lambda event: event.n_type != EVENT_TYPE_END_SERVICE_2, listEvents)
 
-                #cria o evento que diz quando o serviço irá terminar
-                event_end_service_1 = generator.end_service_1_event(total_time, client)
-                push_event(listEvents, event_end_service_1)
+            #adiciona um novo evento de chegada 
+            
+            ---------------------------------------------------------------------------------
+            ---------------------------------------------------------------------------------
 
-    # Falta refatorar a partir daqui: -----------------------------------------------------------------------------------------
+            #move o cliente da fila para o servidor e cria o evento de término do serviço
+            set_client_on_server(queue1, server)
+
+    # caso o evento seja o fim do serviço 1, temos que colocá-lo na fila2, atender o próximo ou ficar ocioso
+    # o cliente 1 com certeza estará no servidor
     elif event.type == EVENT_TYPE_END_SERVICE_1:
-=======
-                listEvents.insert(total_time + new_client.get_service_time_1(), {"client": new_client}, EVENT_TYPE_END_SERVICE_1))
-            else:
-                if server.service_type == 2:
-                    listEvents.insert(Event(total_time, None, EVENT_TYPE_PREEMPTION))
-        
-        elif event.type == EVENT_TYPE_END_SERVICE_1:
->>>>>>> c455a67bc49d62d2e419fc4d67902c45ad3077df
-            client = event.data.client
+            #vamos tirar o cliente do servidor, colocá-lo na segunda fila e setar o tempo global dele
+            client = server.pop()
             client.set_end_service_1(total_time)
             client.set_start_queue_2(total_time)
             queue2.push(client)
-            
-            server.pop()
+
+            #caso a fila 1 esteja, vamos atender o próximo da fila 2
+            #repare que sempre terá pelo menos uma pessoa na fila 2 nesse momento
             if queue1.is_empty():
-                if queue2.is_empty():
-                    pass
-                else:
-                    next_client = queue2.pop()
-                    server.push(next_client)        
-                    listEvents.insert(Event(total_time + next_client.get_service_time_2(), {"client": next_client}, EVENT_TYPE_END_SERVICE_2))
+                #move o cliente da fila para o servidor e cria o evento de término do serviço
+                set_client_on_server(queue2, server)     
+
+            #caso a fila 1 tenha alguém, vamos pegar o próximo da fila 1
             else:
-                next_client = queue1.pop()
-                server.push(next_client)
-                listEvents.insert(Event(total_time + next_client.get_service_time_1(), {"client": next_client}, EVENT_TYPE_END_SERVICE_1))
+                #move o cliente da fila para o servidor e cria o evento de término do serviço
+                set_client_on_server(queue1, server)
+
         elif event.type == EVENT_TYPE_END_SERVICE_2:
-            client = event.data.client
-            client.set_end_service_2(total_time) 
-            server.pop()
-            if queue1.is_empty():
-                if queue2.is_empty():
-                    pass
-                else:
-                    next_client = queue2.pop()
-                    server.push(next_client)        
-                    listEvents.insert(Event(total_time + next_client.get_service_time_2(), {"client": next_client}, EVENT_TYPE_END_SERVICE_2))
+            client = server.pop()
+            client.set_end_service_2(total_time)
+
+            if queue1.is_empty() and not queue2.is_empty():
+                #move o cliente da fila para o servidor e cria o evento de término do serviço
+                set_client_on_server(queue2, server)
             else:
-                next_client = queue1.pop()
-                server.push(next_client)
-                listEvents.insert(Event(total_time + next_client.get_service_time_1(), {"client": next_client}, EVENT_TYPE_END_SERVICE_1))
-<<<<<<< HEAD
+                #move o cliente da fila para o servidor e cria o evento de término do serviço
+                set_client_on_server(queue1, server)
         
 
 
@@ -160,14 +152,5 @@ while rounds < TOTAL_ROUNDS:
 
         deal_event(event, total_time)
 
-=======
-        elif event.type == EVENT_TYPE_PREEMPTION:
-            client_running = server.pop()
-            client_running.update_residual_time(listEvents.find({"client": client_running}).start_time - total_time)
-            listEvents.remove({"client": client_running})
-
-            server.push(queue1.pop())
-            listEvents.insert(Event(total_time + new_client.get_service_time(), {"client": new_client}, EVENT_TYPE_END_SERVICE_1))
->>>>>>> c455a67bc49d62d2e419fc4d67902c45ad3077df
     analytics.run_round()
 analytics.run()
