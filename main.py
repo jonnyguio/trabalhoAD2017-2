@@ -57,7 +57,7 @@ def reset_system():
     server = Server()
     queue1 = Queue()
     queue2 = Queue()
-    generator = Generator(lamb=0.8, mu=1)
+    generator = Generator(lamb=0.1, mu=1)
     total_time = 0
 
 def pop_event(listEvents):
@@ -122,6 +122,10 @@ def deal_event(event):
 
     #caso o evento seja do tipo arrival, temos duas possibilidades, atender o usuário ou colocá-lo na fila
     if event.get_type() == EVENT_TYPE_ARRIVAL and number_clients < TOTAL_CLIENTS:
+        # Como todo evento de chegada poisson é uma amostragem aleatória, pegamos a quantidade de pessoas na fila para usarmos no cálculo da média.
+        analytics.add_people_on_queue1(queue1.get_len())
+        analytics.add_people_on_queue2(queue2.get_len())
+
         #cria o cliente que chegará no tempo marcado no evento
         new_client = Client( total_time )
         new_client.set_service_time_1( generator.end_service_time() )
@@ -170,6 +174,7 @@ def deal_event(event):
         client.set_end_service_1( total_time )
         client.set_start_queue_2( total_time )
         queue2.push(client)
+
 
         #caso a fila 1 esteja, vamos atender o próximo da fila 2
         #repare que sempre terá pelo menos uma pessoa na fila 2 nesse momento
