@@ -14,16 +14,19 @@ class Client(object):
 
     random_generator = None
 
-    def __init__(self, time_in, color="green"):
+    def __init__(self, time_in, transient, color="green"):
     	super(Client, self).__init__()
     	self.start_queue_1 = time_in
     	self.color = color
+        self.__transient = transient
+
+    def is_transient(self):
+        return self.__transient == "TRANSIENT"
 
     def get_end_service_1(self):
         return self.end_service_1
     def set_end_service_1(self, n_end_service_1):
         self.end_service_1 = n_end_service_1
-
 
     def get_end_service_2(self):
     	return self.end_service_2

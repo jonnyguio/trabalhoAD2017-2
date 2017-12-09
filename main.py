@@ -28,7 +28,7 @@ server = Server()
 queue1 = Queue()
 queue2 = Queue()
 generator = Generator(lamb=0.1, mu=1)
-analytics = Analytics()
+analytics = Analytics(TOTAL_CLIENTS - TRANSIENT_STAGE)
 
 total_time = 0
 idle_time = 0
@@ -122,15 +122,25 @@ def deal_event(event):
 
     #caso o evento seja do tipo arrival, temos duas possibilidades, atender o usuário ou colocá-lo na fila
     if event.get_type() == EVENT_TYPE_ARRIVAL and number_clients < TOTAL_CLIENTS:
-        # Como todo evento de chegada poisson é uma amostragem aleatória, pegamos a quantidade de pessoas na fila para usarmos no cálculo da média.
-        analytics.add_people_on_queue1(queue1.get_len())
-        analytics.add_people_on_queue2(queue2.get_len())
-        analytics.add_service_type(server.service_type())
+
+        #incrementa o número total de pessoas que entraram no sistema
+        number_clients += 1 
 
         #cria o cliente que chegará no tempo marcado no evento
-        new_client = Client( total_time )
+        if number_clients < TRANSIENT_STAGE:
+            new_client = Client( total_time, "TRANSIENT")
+        else:
+            new_client = Client( total_time, "NON-TRANSIENT")
         new_client.set_service_time_1( generator.end_service_time() )
         new_client.set_service_time_2( generator.end_service_time() )
+
+        if not new_client.is_transient():
+            analytics.add_sample_queues(queue1, queue2, server)        
+            # analytics.add(new_client)
+            # Como todo evento de chegada poisson é uma amostragem aleatória, pegamos a quantidade de pessoas na fila para usarmos no cálculo da média.
+            # analytics.add_people_on_queue1(queue1.get_len())
+            # analytics.add_people_on_queue2(queue2.get_len())
+            # analytics.add_service_type(server.service_type())
 
         event_arrival = generator.arrival_event(total_time)
         push_event(listEvents, event_arrival)
@@ -139,13 +149,8 @@ def deal_event(event):
         # print("Tempo de serviço 2: {}".format(new_client.get_service_time_2()))
         # coloque-o na fila
         queue1.push( new_client )
-        #incrementa o número total de pessoas que entraram no sistema
-        number_clients += 1 
 
         # #só vamos considerar para a estatísticas os clientes que chegarem após a fase transiente
-        if number_clients > TRANSIENT_STAGE:
-            analytics.add(new_client)
-
         #caso o servidor esteja livre, colocaremos este cliente no servidor e cria os eventos das k chegadas poisson
         if server.is_empty():
             set_client_1_on_server()
@@ -175,7 +180,8 @@ def deal_event(event):
         client.set_end_service_1( total_time )
         client.set_start_queue_2( total_time )
         queue2.push(client)
-
+        if not client.is_transient():
+            analytics.add_sample_end_1(client)
 
         #caso a fila 1 esteja, vamos atender o próximo da fila 2
         #repare que sempre terá pelo menos uma pessoa na fila 2 nesse momento
@@ -192,6 +198,8 @@ def deal_event(event):
     elif event.get_type() == EVENT_TYPE_END_SERVICE2:
         client = server.pop()
         client.set_end_service_2( total_time )
+        if not client.is_transient():
+            analytics.add_sample_end_2(client)
 
         if queue1.is_empty():
             #move o cliente da fila para o servidor e cria o evento de término do serviço
