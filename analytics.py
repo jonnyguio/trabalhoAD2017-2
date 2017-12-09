@@ -40,5 +40,5 @@ class Analytics():
 
     def __new_metric_entry(self):
         new_metrics = self.__metrics_base.copy()
-        new_metrics["E[T1]"] = np.mean([client.get_end_service_2() - client.get_start_queue_1() for client in self.clients_list])
+        new_metrics["E[T1]"] = np.mean([client.get_end_service_1() - client.get_start_queue_1() for client in self.clients_list])
         return new_metrics

@@ -15,7 +15,7 @@ from analytics import Analytics
 # GLOBAL VARIABLES
 TOTAL_ROUNDS = 10
 TOTAL_CLIENTS = 100000
-TRANSIENT_STAGE = 10000
+TRANSIENT_STAGE = 20000
 SERVICE_1 = 1
 SERVICE_2 = 2
 DEBUG = False
@@ -36,6 +36,7 @@ idle_time = 0
 #HELPER FUNCTIONS
 def log_event(event):
     print "#############"
+    # print "Heap: {}".format([event.get_start_time() for event in listEvents])
     print "Ocorreu um evento de tipo: " + event.get_type()
     print "Tempo atual: " + str(total_time)
 
@@ -56,7 +57,7 @@ def reset_system():
     server = Server()
     queue1 = Queue()
     queue2 = Queue()
-    generator = Generator(lamb=0.1, mu=1)
+    generator = Generator(lamb=0.8, mu=1)
     total_time = 0
 
 def pop_event(listEvents):
@@ -73,12 +74,15 @@ def push_k_arrival_events(time_in, time_out):
     while True:
         event_arrival = generator.arrival_event(time_temp)
         push_event(listEvents, event_arrival)
-        time_in = event_arrival.get_start_time()
-        if time_in >= time_out:
+        time_temp = event_arrival.get_start_time()
+        if time_temp > time_out:
             break
 
 #método que pega o próximo cliente, coloca no servidor e cria o evento indicando
 def set_client_1_on_server():
+    global total_time
+    global server
+    global queue1
     next_client = queue1.pop()
     server.push(next_client)
 
@@ -87,11 +91,14 @@ def set_client_1_on_server():
 
     # falta adicionar todos os eventos de chegadas que devem existir
     # como o time_temp será incrementado, não queremos passar total_time como referência
-    time_in = total_time
-    time_out = event_end_service.get_start_time()
-    push_k_arrival_events(time_in, time_out)
+    # time_in = total_time
+    # time_out = event_end_service.get_start_time()
+    # push_k_arrival_events(time_in, time_out)
 
 def set_client_2_on_server():   
+    global total_time
+    global queue2
+    global server
     next_client = queue2.pop()
     server.push(next_client)
 
@@ -100,12 +107,15 @@ def set_client_2_on_server():
 
     # falta adicionar todos os eventos de chegadas que devem existir
     # como o time_temp será incrementado, não queremos passar total_time como referência
-    time_in = total_time
-    time_out = event_end_service.get_start_time()
-    push_k_arrival_events(time_in, time_out)
+    # time_in = total_time
+    # time_out = event_end_service.get_start_time()
+    # push_k_arrival_events(time_in, time_out)
 
 
 def deal_event(event):
+    global queue1
+    global queue2
+    global server
     global total_time
     global number_clients
     global listEvents
@@ -116,7 +126,13 @@ def deal_event(event):
         new_client = Client( total_time )
         new_client.set_service_time_1( generator.end_service_time() )
         new_client.set_service_time_2( generator.end_service_time() )
-        #coloque-o na fila
+
+        event_arrival = generator.arrival_event(total_time)
+        push_event(listEvents, event_arrival)
+
+        # print("Tempo de serviço 1: {}".format(new_client.get_service_time_1()))
+        # print("Tempo de serviço 2: {}".format(new_client.get_service_time_2()))
+        # coloque-o na fila
         queue1.push( new_client )
         #incrementa o número total de pessoas que entraram no sistema
         number_clients += 1 
@@ -160,7 +176,7 @@ def deal_event(event):
         if queue1.is_empty():
             #move o cliente da fila para o servidor e cria o evento de término do serviço
             if not queue2.is_empty():
-                set_client_2_on_server()     
+                set_client_2_on_server()
 
         #caso a fila 1 tenha alguém, vamos pegar o próximo da fila 1
         else:
@@ -209,12 +225,12 @@ def simulate():
             deal_event(event)
             if DEBUG:
                 log_system()
+                time.sleep(0.1)
         analytics.run_round()
         # print(analytics.get_metrics())
-        # time.sleep(1)
         rounds += 1
     analytics.run()
-    # print(analytics.get_metrics())
+    print(analytics.get_metrics())
     print(analytics.get_final_metrics())
 
 if __name__ == '__main__':

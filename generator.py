@@ -14,6 +14,7 @@ class Generator:
     
     def arrival_event(self, time):
         time_sample = self.arrival_time()
+        # print("Tempo de chegada: {}".format(time_sample))
         return Event(time+time_sample, EVENT_TYPE_ARRIVAL)
 
     def end_service_1_event(self, time, client):
