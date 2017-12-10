@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-import numpy as np, scipy.stats as st
+import numpy as np
+from scipy.stats import chi2, t
 import pandas as pd
 
 class Analytics():
@@ -36,7 +37,20 @@ class Analytics():
         return self.__pd.__str__()
 
     def mean_confidence_interval(self, samples, confidence=0.95):
-        return st.t.interval(confidence, len(samples)-1, loc=np.mean(samples), scale=st.sem(samples))
+        n = len(samples)
+        alpha = 1 - confidence
+        mean = np.mean(samples)
+        stdn = np.std(samples) / (n**0.5)
+        e0 = t.ppf( alpha/2., n-1 )*stdn
+        return (mean-e0, mean+e0)
+
+    def variance_confidence_interval(self, samples, confidence=0.95):
+        n = len(samples)
+        alpha = 1 - confidence
+        Sn = np.mean(samples) * (n-1)
+        right = chi2.ppf( alpha/2., n-1 )
+        left = chi2.ppf( 1-alpha/2., n-1 )
+        return (Sn/left, Sn/right)
 
     def add_people_on_queue1(self, new_count):
         self.__people_on_queue1.append(new_count)
@@ -77,11 +91,11 @@ class Analytics():
         final_metrics["S(E[T2])"] = self.mean_confidence_interval([metric["E[T2]"] for metric in self.__metrics])
         final_metrics["S(E[W2])"] = self.mean_confidence_interval([metric["E[W2]"] for metric in self.__metrics])
         final_metrics["S(E[N1])"] = self.mean_confidence_interval([metric["E[N1]"] for metric in self.__metrics])
-        final_metrics["S(E[N2])"] = serlf.mean_confidence_interval([metric["E[N2]"] for metric in self.__metrics])
+        final_metrics["S(E[N2])"] = self.mean_confidence_interval([metric["E[N2]"] for metric in self.__metrics])
         final_metrics["S(E[Nq1])"] = self.mean_confidence_interval([metric["E[Nq1]"] for metric in self.__metrics])
         final_metrics["S(E[Nq2])"] = self.mean_confidence_interval([metric["E[Nq2]"] for metric in self.__metrics])
-        final_metrics["S(V[W1])"] = np.std([metric["V[W1]"] for metric in self.__metrics], axis=0 )
-        final_metrics["S(V[W2])"] = np.std([metric["V[W2]"] for metric in self.__metrics], axis=0 )
+        final_metrics["S(V[W1])"] = self.variance_confidence_interval([metric["V[W1]"] for metric in self.__metrics])
+        final_metrics["S(V[W2])"] = self.variance_confidence_interval([metric["V[W2]"] for metric in self.__metrics])
 
         self.__final_metrics = final_metrics
         self.__pd = pd.DataFrame(final_metrics.items())
