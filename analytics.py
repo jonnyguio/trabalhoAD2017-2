@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import numpy as np
+import numpy as np, scipy.stats as st
 import pandas as pd
 
 class Analytics():
@@ -35,6 +35,9 @@ class Analytics():
     def __str__(self):
         return self.__pd.__str__()
 
+    def mean_confidence_interval(self, samples, confidence=0.95):
+        return st.t.interval(confidence, len(samples)-1, loc=np.mean(samples), scale=st.sem(samples))
+
     def add_people_on_queue1(self, new_count):
         self.__people_on_queue1.append(new_count)
     def get_people_on_queue1(self):
@@ -68,6 +71,18 @@ class Analytics():
         final_metrics["E[Nq2]"] = np.mean([metric["E[Nq2]"] for metric in self.__metrics])
         final_metrics["V[W1]"] = np.mean([metric["V[W1]"] for metric in self.__metrics])
         final_metrics["V[W2]"] = np.mean([metric["V[W2]"] for metric in self.__metrics])
+
+        final_metrics["S(E[T1])"] = self.mean_confidence_interval([metric["E[T1]"] for metric in self.__metrics])
+        final_metrics["S(E[W1])"] = self.mean_confidence_interval([metric["E[W1]"] for metric in self.__metrics])
+        final_metrics["S(E[T2])"] = self.mean_confidence_interval([metric["E[T2]"] for metric in self.__metrics])
+        final_metrics["S(E[W2])"] = self.mean_confidence_interval([metric["E[W2]"] for metric in self.__metrics])
+        final_metrics["S(E[N1])"] = self.mean_confidence_interval([metric["E[N1]"] for metric in self.__metrics])
+        final_metrics["S(E[N2])"] = serlf.mean_confidence_interval([metric["E[N2]"] for metric in self.__metrics])
+        final_metrics["S(E[Nq1])"] = self.mean_confidence_interval([metric["E[Nq1]"] for metric in self.__metrics])
+        final_metrics["S(E[Nq2])"] = self.mean_confidence_interval([metric["E[Nq2]"] for metric in self.__metrics])
+        final_metrics["S(V[W1])"] = np.std([metric["V[W1]"] for metric in self.__metrics], axis=0 )
+        final_metrics["S(V[W2])"] = np.std([metric["V[W2]"] for metric in self.__metrics], axis=0 )
+
         self.__final_metrics = final_metrics
         self.__pd = pd.DataFrame(final_metrics.items())
         return final_metrics
