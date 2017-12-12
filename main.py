@@ -5,7 +5,6 @@ import time
 import sys
 import random
 
-import matplotlib.pyplot as plt
 import numpy as np
 from heapq import heappush, heappop
 from optparse import OptionParser
