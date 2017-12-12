@@ -50,7 +50,7 @@ class Analytics():
         n = len(samples)
         alpha = 1 - confidence
         mean = np.mean(samples)
-        stdn = np.std(samples) / (n**0.5)
+        stdn = np.std(samples)
         e0 = t.ppf( alpha/2., n-1 )*stdn
         return (mean-e0, mean+e0)
 
@@ -144,6 +144,14 @@ class Analytics():
         # final_metrics["p2(S(V[W1]))"] = self.mean_confidence_precision(final_metrics, "S(V[W1])")
         # final_metrics["p2(S(V[W2]))"] = self.mean_confidence_precision(final_metrics, "S(V[W2])")
 
+        final_metrics["t-student -> E[W1]"] = self.frequency_interval([metric["E[W1]"] for metric in self.__metrics])
+        final_metrics["t-student -> E[T1]"] = self.frequency_interval([metric["E[T1]"] for metric in self.__metrics])
+        final_metrics["t-student -> E[W2]"] = self.frequency_interval([metric["E[W2]"] for metric in self.__metrics])
+        final_metrics["t-student -> E[T2]"] = self.frequency_interval([metric["E[T2]"] for metric in self.__metrics])
+        final_metrics["t-student -> E[N1]"] = self.frequency_interval([metric["E[N1]"] for metric in self.__metrics])
+        final_metrics["t-student -> E[N2]"] = self.frequency_interval([metric["E[N2]"] for metric in self.__metrics])
+        final_metrics["t-student -> E[Nq1]"] = self.frequency_interval([metric["E[Nq1]"] for metric in self.__metrics])
+        final_metrics["t-student -> E[Nq2]"] = self.frequency_interval([metric["E[Nq2]"] for metric in self.__metrics])
         final_metrics["t-student -> V[W1]"] = self.frequency_interval([metric["V[W1]"] for metric in self.__metrics])
         final_metrics["t-student -> V[W2]"] = self.frequency_interval([metric["V[W2]"] for metric in self.__metrics])
 
