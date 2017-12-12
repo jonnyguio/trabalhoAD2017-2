@@ -87,17 +87,8 @@ def pop_event(listEvents):
 def push_event(listEvents, event):
     heappush(listEvents, event)
 
-def push_k_arrival_events(time_in, time_out):
-    #enquanto a chegada do usuário for menor que o tempo do fim do serviço, adiciona o evento de chegada
-    time_temp = float(time_in)
-    while True:
-        event_arrival = generator.arrival_event(time_temp)
-        push_event(listEvents, event_arrival)
-        time_temp = event_arrival.get_start_time()
-        if time_temp > time_out:
-            break
 
-#método que pega o próximo cliente, coloca no servidor e cria o evento indicando
+#método que pega o próximo cliente, coloca no servidor e cria o evento indicando de fim de serviço
 def set_client_1_on_server():
     global total_time
     global server
@@ -108,12 +99,7 @@ def set_client_1_on_server():
     event_end_service = generator.end_service_1_event(total_time, next_client)
     push_event(listEvents, event_end_service)
 
-    # falta adicionar todos os eventos de chegadas que devem existir
-    # como o time_temp será incrementado, não queremos passar total_time como referência
-    # time_in = total_time
-    # time_out = event_end_service.get_start_time()
-    # push_k_arrival_events(time_in, time_out)
-
+#método que pega o próximo cliente, coloca no servidor e cria o evento indicando de fim de serviço
 def set_client_2_on_server():   
     global total_time
     global queue2
@@ -124,13 +110,8 @@ def set_client_2_on_server():
     event_end_service = generator.end_service_2_event(total_time, next_client)
     push_event(listEvents, event_end_service)
 
-    # falta adicionar todos os eventos de chegadas que devem existir
-    # como o time_temp será incrementado, não queremos passar total_time como referência
-    # time_in = total_time
-    # time_out = event_end_service.get_start_time()
-    # push_k_arrival_events(time_in, time_out)
 
-
+#método responsável por lidar com os diversos tipos de eventos
 def deal_event(event):
     global queue1
     global queue2
@@ -145,7 +126,8 @@ def deal_event(event):
         #incrementa o número total de pessoas que entraram no sistema
         number_clients += 1 
 
-        #cria o cliente que chegará no tempo marcado no evento
+        #cria o cliente que chegará no tempo marcado no evento e marca 
+        #como transiente ou não transiente dependendo do número de clientes já criado
         if number_clients < TRANSIENT_STAGE:
             new_client = Client( total_time, "TRANSIENT")
         else:
@@ -155,30 +137,22 @@ def deal_event(event):
             
         if not new_client.is_transient():
             analytics.add_sample_queues(queue1, queue2, server)
-            # analytics.add(new_client)
-            # Como todo evento de chegada poisson é uma amostragem aleatória, pegamos a quantidade de pessoas na fila para usarmos no cálculo da média.
-            # analytics.add_people_on_queue1(queue1.get_len())
-            # analytics.add_people_on_queue2(queue2.get_len())
-            # analytics.add_service_type(server.service_type())
 
         event_arrival = generator.arrival_event(total_time)
         push_event(listEvents, event_arrival)
 
-        # print("Tempo de serviço 1: {}".format(new_client.get_service_time_1()))
-        # print("Tempo de serviço 2: {}".format(new_client.get_service_time_2()))
         # coloque-o na fila
         queue1.push( new_client )
 
-        # #só vamos considerar para a estatísticas os clientes que chegarem após a fase transiente
-        #caso o servidor esteja livre, colocaremos este cliente no servidor e cria os eventos das k chegadas poisson
+        #caso o servidor esteja livre, colocaremos este cliente no servidor
         if server.is_empty():
             set_client_1_on_server()
-        #caso o servidor esteja ocupado, nada acontecerá caso seja o cliente 1, caso seja o cliente 2, ele sofrerá preempção
+        #caso o servidor esteja ocupado -> nada acontecerá caso seja o cliente 1, caso seja o cliente 2, ele sofrerá preempção
         elif server.service_type() == SERVICE_2:
             #retira o cliente 2 do servidor
             client_running = server.pop()
 
-            #atualiza o tempo de serviço pelo residual, sempre tem apenas 1 elemento
+            #atualiza o tempo de serviço pelo residual
             event_end_service = list(filter(lambda event: event.get_type() == EVENT_TYPE_END_SERVICE2, listEvents))[0]
             client_running.set_service_time_2(event_end_service.get_start_time() - total_time)
 
