@@ -15,9 +15,9 @@ class Client(object):
     random_generator = None
 
     def __init__(self, time_in, transient, color="green"):
-    	super(Client, self).__init__()
-    	self.start_queue_1 = time_in
-    	self.color = color
+        super(Client, self).__init__()
+        self.start_queue_1 = time_in
+        self.color = color
         self.__transient = transient
 
     def is_transient(self):
@@ -41,15 +41,15 @@ class Client(object):
         
 
     def get_start_queue_2(self):
-    	return self.start_queue_2
+        return self.start_queue_2
     def set_start_queue_2(self, n_start_queue_2):
         self.start_queue_2 = n_start_queue_2
 
 
     def get_service_time_1(self):
-    	return self.service_time_1
+        return self.service_time_1
     def set_service_time_1(self, time):
-    	self.service_time_1 = time
+        self.service_time_1 = time
 
 
     def get_total_service_time_2(self):
@@ -59,4 +59,4 @@ class Client(object):
     def set_service_time_2(self, time):
         if self.total_service_time_2 == None:
             self.total_service_time_2 = time
-    	self.service_time_2 = time
+        self.service_time_2 = time
