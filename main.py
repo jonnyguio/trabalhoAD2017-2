@@ -23,7 +23,7 @@ parser.add_option("--mu", "-m", action="store", dest="global_mu", help="set serv
 parser.add_option("--rounds", "-r", action="store", dest="global_rounds", help="set total of rounds", type="int")
 parser.add_option("--clients", "-c", action="store", dest="global_clients", help="set total of clients", type="int")
 parser.add_option("--transient", "-t", action="store", dest="global_transient", help="set size of transient stage", type="int")
-parser.add_option("--debug", action="store", dest="global_debug", help="print complete log of events", type="int")
+parser.add_option("--debug", action="store", dest="global_debug", help="print(complete log of events", type="int")
 parser.add_option("--event-parser", action="store", dest="global_event_parser", help="write on file statitics from every event", type="int")
 (parse_options, args) = parser.parse_args()
 
@@ -54,17 +54,17 @@ idle_time = 0
 
 #HELPER FUNCTIONS
 def log_event(event):
-    print "#############"
-    # print "Heap: {}".format([event.get_start_time() for event in listEvents])
-    print "Ocorreu um evento de tipo: " + event.get_type()
-    print "Tempo atual: " + str(total_time)
+    print("#############")
+    # print("Heap: {}".format([event.get_start_time() for event in listEvents])
+    print("Ocorreu um evento de tipo: " + event.get_type())
+    print("Tempo atual: " + str(total_time))
 
 def log_system():
-    print ""
-    print "Fila 1: " + str(queue1.get_params())
-    print "Fila 2: " + str(queue2.get_params())
-    print "Servidor: " + str(server.get_params())
-    print "#############"
+    print("")
+    print("Fila 1: " + str(queue1.get_params()))
+    print("Fila 2: " + str(queue2.get_params()))
+    print("Servidor: " + str(server.get_params()))
+    print("#############")
 
 def reset_system():
     global server
@@ -179,14 +179,14 @@ def deal_event(event):
             client_running = server.pop()
 
             #atualiza o tempo de serviço pelo residual, sempre tem apenas 1 elemento
-            event_end_service = filter(lambda event: event.get_type() == EVENT_TYPE_END_SERVICE2, listEvents)[0]
+            event_end_service = list(filter(lambda event: event.get_type() == EVENT_TYPE_END_SERVICE2, listEvents))[0]
             client_running.set_service_time_2(event_end_service.get_start_time() - total_time)
 
             #coloque o cliente que estava no servidor no inicio da fila 2
             queue2.pushleft(client_running)
 
             #remova o evento do serviço do tipo 2 da heap de eventos
-            listEvents = filter(lambda event: event.get_type() != EVENT_TYPE_END_SERVICE2, listEvents)
+            listEvents = list(filter(lambda event: event.get_type() != EVENT_TYPE_END_SERVICE2, listEvents))
 
             #move o cliente da fila para o servidor e cria o evento de término do serviço
             set_client_1_on_server()
