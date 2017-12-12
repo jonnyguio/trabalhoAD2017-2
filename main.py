@@ -4,8 +4,12 @@ import os
 import time
 import sys
 import random
-from events import Event, EVENT_TYPE_ARRIVAL, EVENT_TYPE_END_SERVICE1, EVENT_TYPE_END_SERVICE2
+
+import matplotlib.pyplot as plt
+import numpy as np
 from heapq import heappush, heappop
+from optparse import OptionParser
+from events import Event, EVENT_TYPE_ARRIVAL, EVENT_TYPE_END_SERVICE1, EVENT_TYPE_END_SERVICE2
 from queue import Queue
 from server import Server
 from client import Client
@@ -13,18 +17,26 @@ from generator import Generator
 from copy import deepcopy
 from analytics import Analytics
 
+parser = OptionParser()
+parser.add_option("--lambda", "-l", action="store", dest="global_lambda", help="set queue lambda", type="float")
+parser.add_option("--mu", "-m", action="store", dest="global_mu", help="set server mu", type="float")
+parser.add_option("--rounds", "-r", action="store", dest="global_rounds", help="set total of rounds", type="int")
+parser.add_option("--clients", "-c", action="store", dest="global_clients", help="set total of clients", type="int")
+parser.add_option("--transient", "-t", action="store", dest="global_transient", help="set size of transient stage", type="int")
+parser.add_option("--debug", action="store", dest="global_debug", help="print complete log of events", type="int")
+parser.add_option("--event-parser", action="store", dest="global_event_parser", help="write on file statitics from every event", type="int")
+(parse_options, args) = parser.parse_args()
 
 # GLOBAL VARIABLES
-TOTAL_ROUNDS = int(sys.argv[3])
-TOTAL_CLIENTS = int(sys.argv[1])
-TRANSIENT_STAGE = int(sys.argv[2])
+TOTAL_ROUNDS = parse_options.global_rounds
+TOTAL_CLIENTS = parse_options.global_clients
+TRANSIENT_STAGE = parse_options.global_transient
 SERVICE_1 = 1
 SERVICE_2 = 2
-try:
-    DEBUG = bool(sys.argv[4]) 
-except IndexError:
-    DEBUG = False
-
+DEBUG = bool(parse_options.global_debug) if parse_options.global_debug is not None else False
+PRINT_EACH_EVENT = bool(parse_options.global_event_parser) if parse_options.global_event_parser is not None else False
+LAMBDA = parse_options.global_lambda if parse_options.global_lambda is not None else 0.1
+MU = parse_options.global_mu if parse_options.global_mu is not None else 1
 
 number_clients = 0
 
@@ -33,10 +45,11 @@ listEvents = [] #inicializacao da heap
 server = Server()
 queue1 = Queue()
 queue2 = Queue()
-generator = Generator(lamb=0.1, mu=1)
+generator = Generator(lamb=LAMBDA, mu=MU)
 analytics = Analytics(TOTAL_CLIENTS - TRANSIENT_STAGE)
 
 total_time = 0
+last_time = 0
 idle_time = 0
 
 #HELPER FUNCTIONS
@@ -63,7 +76,7 @@ def reset_system():
     server = Server()
     queue1 = Queue()
     queue2 = Queue()
-    generator = Generator(lamb=0.1, mu=1, seed=time.time()*time.time() % 10e9)
+    generator = Generator(lamb=LAMBDA, mu=MU, seed=time.time()*time.time() % 10e9)
     total_time = 0
 
 def pop_event(listEvents):
@@ -128,7 +141,7 @@ def deal_event(event):
 
     #caso o evento seja do tipo arrival, temos duas possibilidades, atender o usuário ou colocá-lo na fila
     if event.get_type() == EVENT_TYPE_ARRIVAL and number_clients < TOTAL_CLIENTS:
-
+            
         #incrementa o número total de pessoas que entraram no sistema
         number_clients += 1 
 
@@ -178,6 +191,7 @@ def deal_event(event):
             #move o cliente da fila para o servidor e cria o evento de término do serviço
             set_client_1_on_server()
             
+            
     # caso o evento seja o fim do serviço 1, temos que colocá-lo na fila2, atender o próximo ou ficar ocioso
     # o cliente 1 com certeza estará no servidor
     elif event.get_type() == EVENT_TYPE_END_SERVICE1:
@@ -200,6 +214,7 @@ def deal_event(event):
         else:
             #move o cliente da fila para o servidor e cria o evento de término do serviço
             set_client_1_on_server()
+            
 
     elif event.get_type() == EVENT_TYPE_END_SERVICE2:
         client = server.pop()
@@ -214,6 +229,7 @@ def deal_event(event):
         else:
             #move o cliente da fila para o servidor e cria o evento de término do serviço
             set_client_1_on_server()
+
         
 
 
@@ -223,12 +239,14 @@ def simulate():
     global idle_time
     global number_clients
     global analytics
+    path = "testes/fase_transiente/metrics"
 
+    # metrics = np.array([])
     while rounds < TOTAL_ROUNDS:
         number_clients = 0
         print("round {}:".format(rounds))
         reset_system()
-
+        # metrics.append([])
         while number_clients < TOTAL_CLIENTS or len(listEvents) > 0:
             if DEBUG:
                 print("number of clients: {}".format(number_clients))
@@ -239,15 +257,28 @@ def simulate():
                 event = generator.arrival_event(total_time)
                 idle_time += event.get_start_time() - total_time
 
+            last_time = total_time
             total_time = event.get_start_time()
             if DEBUG:
                 log_event(event)
             deal_event(event)
             if DEBUG:
                 log_system()
+            if PRINT_EACH_EVENT:
+                if event.get_type() == EVENT_TYPE_ARRIVAL:
+                    sample_metrics = analytics.run_event(number_clients)
+                    for index, metric in enumerate(analytics.metrics_name):
+                        with file("{}-{}-{}.txt".format(path, metric, rounds), 'a') as new_file:
+                            new_file.write("{}\n".format(sample_metrics[index]))
         analytics.run_round()
         analytics.print_last_round()
         rounds += 1
+    # for index, metric in enumerate(analytics.metrics_name):
+    #     lspace = np.linspace(0, TOTAL_CLIENTS, len(metric_round[index]))
+    #     for metric_round in metrics:
+    #         line = plt.plot(lspace, metric_round[:,index], '--', linewidth=2, label='Amostra {}'.format(metric_round+1))
+    #     plt.legend(loc='lower right')
+    #     plt.show()
     analytics.run(TOTAL_CLIENTS)
     print(analytics)
     # print(analytics.get_metrics())

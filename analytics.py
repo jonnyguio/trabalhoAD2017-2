@@ -3,6 +3,8 @@ import numpy as np
 from scipy.stats import chi2, t
 import pandas as pd
 
+path = "testes/fase_transiente/metrics"
+
 class Analytics():
 
     __metrics_base = {
@@ -17,6 +19,7 @@ class Analytics():
         "V[W1]": 0.0,
         "V[W2]": 0.0
     }
+    metrics_name = ["E[Nq1]", "E[Nq2]", "E[N1]", "E[N2]", "E[T1]", "E[W1]", "E[T2]", "E[W2]", "V[W1]", "V[W2]"]
 
     def __init__(self, total_samples):
         self.clients_list = []
@@ -32,6 +35,10 @@ class Analytics():
         self.__total_samples = total_samples
         self.__new_metrics = self.__metrics_base.copy()
         self.__pd = []
+        self.__area_people_time_line_1 = 0
+        self.__area_people_time_line_2 = 0
+        self.__area_people_time_1 = 0
+        self.__area_people_time_2 = 0
 
     def __str__(self):
         return self.__pd.__str__()
@@ -61,16 +68,6 @@ class Analytics():
         b = chi2.ppf(alpha/2., n-1)
         p = (a - b)/(a + b)
         return p
-
-    def add_people_on_queue1(self, new_count):
-        self.__people_on_queue1.append(new_count)
-    def get_people_on_queue1(self):
-        return self.__people_on_queue1
-
-    def add_people_on_queue2(self, new_count):
-        self.__people_on_queue2.append(new_count)
-    def get_people_on_queue2(self):
-        return self.__people_on_queue2
 
     def add_service_type(self, new_server_type):
         self.__service_type.append(new_server_type)
@@ -124,6 +121,18 @@ class Analytics():
         self.__pd = pd.DataFrame(final_metrics.items())
         return final_metrics
 
+    def run_event(self, clients_now): 
+        return [self.__new_metrics["E[Nq1]"] / float(clients_now),
+                     self.__new_metrics["E[Nq2]"] / float(clients_now),
+                     self.__new_metrics["E[N1]"] / float(clients_now),
+                     self.__new_metrics["E[N2]"] / float(clients_now),
+                     self.__new_metrics["E[T1]"] / float(clients_now),
+                     self.__new_metrics["E[W1]"] / float(clients_now),
+                     self.__new_metrics["E[T2]"] / float(clients_now),
+                     self.__new_metrics["E[W2]"] / float(clients_now),
+                     self.__new_metrics["V[W1]"] / float(clients_now) - (self.__new_metrics["E[W1]"] / float(clients_now))**2,
+                     self.__new_metrics["V[W2]"] / float(clients_now) - (self.__new_metrics["E[W2]"] / float(clients_now))**2]
+
     def run_round(self):
         # self.__add_round()
         self.__new_metrics["E[Nq1]"] /= float(self.__total_samples)
@@ -136,6 +145,10 @@ class Analytics():
         self.__new_metrics["E[W2]"] /= float(self.__total_samples)
         self.__new_metrics["V[W1]"] = self.__new_metrics["V[W1]"] / float(self.__total_samples) - self.__new_metrics["E[W1]"]**2
         self.__new_metrics["V[W2]"] = self.__new_metrics["V[W2]"] / float(self.__total_samples) - self.__new_metrics["E[W2]"]**2
+        # self.__new_metrics["area_people_time_1"] = self.__area_people_time_1
+        # self.__new_metrics["area_people_time_2"] = self.__area_people_time_2
+        # self.__new_metrics["area_people_time_line_1"] = self.__area_people_time_line_1
+        # self.__new_metrics["area_people_time_line_2"] = self.__area_people_time_line_2
         self.__metrics.append(self.__new_metrics.copy())
         self.__new_metrics["E[Nq1]"] = 0.0
         self.__new_metrics["E[Nq2]"] = 0.0
@@ -153,7 +166,15 @@ class Analytics():
         print(_pd)
 
     def get_metrics(self):
-        return self.__metrics
+        return self.__new_metrics
+
+    def add_sample_queue1(self, queue1, server, time_i, time_i_1):
+        self.__area_people_time_line_1 += (time_i_1 - time_i) * queue1.get_len()
+        self.__area_people_time_1 += (time_i_1 - time_i) * (queue1.get_len() + 1 if server.service_type() == 1 else queue1.get_len())
+
+    def add_sample_queue2(self, queue2, server, time_i, time_i_1):
+        self.__area_people_time_line_2 += (time_i_1 - time_i) * queue2.get_len()
+        self.__area_people_time_2 += (time_i_1 - time_i) * (queue2.get_len() + 1 if server.service_type() == 2 else queue2.get_len())
 
     def add_sample_queues(self, queue1, queue2, server):
         self.__new_metrics["E[Nq1]"] += queue1.get_len()
@@ -162,14 +183,28 @@ class Analytics():
         self.__new_metrics["E[N2]"] += (queue2.get_len() + 1 if server.service_type() == 2 else queue2.get_len())
     
     def add_sample_end_1(self, client):
+        # values = {}
+        # values["E[T1]"] = client.get_end_service_1() - client.get_start_queue_1()
+        # values["E[W1]"] = client.get_end_service_1() - client.get_start_queue_1() - client.get_service_time_1()
+        # values["V[W1]"] = (client.get_end_service_1() - client.get_start_queue_1() - client.get_service_time_1())**2
         self.__new_metrics["E[T1]"] += client.get_end_service_1() - client.get_start_queue_1()
         self.__new_metrics["E[W1]"] += client.get_end_service_1() - client.get_start_queue_1() - client.get_service_time_1()
         self.__new_metrics["V[W1]"] += (client.get_end_service_1() - client.get_start_queue_1() - client.get_service_time_1())**2
+        # for metric in ['E[T1]', 'E[W1]', 'V[W1]']:
+        #     with file("{}-{}.txt".format(path, metric), 'a') as new_file:
+        #         new_file.write("{}\n".format(values[metric]))
     
     def add_sample_end_2(self, client):
+        # values = {}
+        # values["E[T2]"] = client.get_end_service_2() - client.get_start_queue_2()
+        # values["E[W2]"] = client.get_end_service_2() - client.get_start_queue_2() - client.get_service_time_2()
+        # values["V[W2]"] = (client.get_end_service_2() - client.get_start_queue_2() - client.get_service_time_2())**2
         self.__new_metrics["E[T2]"] += client.get_end_service_2() - client.get_start_queue_2()
         self.__new_metrics["E[W2]"] += client.get_end_service_2() - client.get_start_queue_2() - client.get_total_service_time_2()
         self.__new_metrics["V[W2]"] += (client.get_end_service_2() - client.get_start_queue_2() - client.get_total_service_time_2())**2
+        # for metric in ['E[T2]', 'E[W2]', 'V[W2]']:
+        #     with file("{}-{}.txt".format(path, metric), 'a') as new_file:
+        #         new_file.write("{}\n".format(values[metric]))
 
         
     # def __add_round(self):

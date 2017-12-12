@@ -31,6 +31,11 @@ class Server(object):
 		if len(self.__params["deque"]) == 0:
 			return None
 		return self.__params["deque"].pop()
+	
+	def check(self):
+		if len(self.__params["deque"]) == 0:
+			return None
+		return self.__params["deque"][0]
 
 	def service_type(self):
 		if len(self.__params["deque"]) == 0:
