@@ -80,7 +80,7 @@ class Analytics():
         left  = min(ic)
         hits = self.count_inside_interval(samples, left, right)
         frequency = hits / len(samples)
-        return (right, left), frequency, hits, len(samples)
+        return (right, left), frequency
 
     def count_inside_interval(self, samples, left, right):
         total_hit = 0
@@ -89,12 +89,7 @@ class Analytics():
         return total_hit
 
     def __inside_interval(self, value, left, right):
-        if value >= left and value <= right:
-            print(value, left, right, "Hit!")
-            return True
-        else:
-            print(value, left, right)
-            return False
+        return value >= left and value <= right
 
     def add_service_type(self, new_server_type):
         self.__service_type.append(new_server_type)
@@ -144,14 +139,6 @@ class Analytics():
         # final_metrics["p2(S(V[W1]))"] = self.mean_confidence_precision(final_metrics, "S(V[W1])")
         # final_metrics["p2(S(V[W2]))"] = self.mean_confidence_precision(final_metrics, "S(V[W2])")
 
-        final_metrics["t-student -> E[W1]"] = self.frequency_interval([metric["E[W1]"] for metric in self.__metrics])
-        final_metrics["t-student -> E[T1]"] = self.frequency_interval([metric["E[T1]"] for metric in self.__metrics])
-        final_metrics["t-student -> E[W2]"] = self.frequency_interval([metric["E[W2]"] for metric in self.__metrics])
-        final_metrics["t-student -> E[T2]"] = self.frequency_interval([metric["E[T2]"] for metric in self.__metrics])
-        final_metrics["t-student -> E[N1]"] = self.frequency_interval([metric["E[N1]"] for metric in self.__metrics])
-        final_metrics["t-student -> E[N2]"] = self.frequency_interval([metric["E[N2]"] for metric in self.__metrics])
-        final_metrics["t-student -> E[Nq1]"] = self.frequency_interval([metric["E[Nq1]"] for metric in self.__metrics])
-        final_metrics["t-student -> E[Nq2]"] = self.frequency_interval([metric["E[Nq2]"] for metric in self.__metrics])
         final_metrics["t-student -> V[W1]"] = self.frequency_interval([metric["V[W1]"] for metric in self.__metrics])
         final_metrics["t-student -> V[W2]"] = self.frequency_interval([metric["V[W2]"] for metric in self.__metrics])
 
