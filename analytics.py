@@ -44,6 +44,9 @@ class Analytics():
         e0 = t.ppf( alpha/2., n-1 )*stdn
         return (mean-e0, mean+e0)
 
+    def mean_confidence_precision(self, final_metrics, metric):
+        return (final_metrics[metric][0] - final_metrics[metric][1]) / (final_metrics[metric][0] + final_metrics[metric][1])
+
     def variance_confidence_interval(self, samples, confidence=0.95):
         n = len(samples)
         alpha = 1 - confidence
@@ -51,6 +54,13 @@ class Analytics():
         right = chi2.ppf( alpha/2., n-1 )
         left = chi2.ppf( 1-alpha/2., n-1 )
         return (Sn/left, Sn/right)
+
+    def variance_confidence_precision(self, n, confidence=0.95):
+        alpha = 1-confidence
+        a = chi2.ppf(1-alpha/2., n-1)
+        b = chi2.ppf(alpha/2., n-1)
+        p = (a - b)/(a + b)
+        return p
 
     def add_people_on_queue1(self, new_count):
         self.__people_on_queue1.append(new_count)
@@ -73,7 +83,7 @@ class Analytics():
     def get_final_metrics(self):
         return self.__final_metrics
 
-    def run(self):
+    def run(self, clients):
         final_metrics = self.__metrics_base.copy()
         final_metrics["E[T1]"] = np.mean([metric["E[T1]"] for metric in self.__metrics])
         final_metrics["E[W1]"] = np.mean([metric["E[W1]"] for metric in self.__metrics])
@@ -96,6 +106,19 @@ class Analytics():
         final_metrics["S(E[Nq2])"] = self.mean_confidence_interval([metric["E[Nq2]"] for metric in self.__metrics])
         final_metrics["S(V[W1])"] = self.variance_confidence_interval([metric["V[W1]"] for metric in self.__metrics])
         final_metrics["S(V[W2])"] = self.variance_confidence_interval([metric["V[W2]"] for metric in self.__metrics])
+
+        final_metrics["p(S(E[T1]))"] = self.mean_confidence_precision(final_metrics, "S(E[T1])")
+        final_metrics["p(S(E[W1]))"] = self.mean_confidence_precision(final_metrics, "S(E[W1])")
+        final_metrics["p(S(E[T2]))"] = self.mean_confidence_precision(final_metrics, "S(E[T2])")
+        final_metrics["p(S(E[W2]))"] = self.mean_confidence_precision(final_metrics, "S(E[W2])")
+        final_metrics["p(S(E[N1]))"] = self.mean_confidence_precision(final_metrics, "S(E[N1])")
+        final_metrics["p(S(E[N2]))"] = self.mean_confidence_precision(final_metrics, "S(E[N2])")
+        final_metrics["p(S(E[Nq1]))"] = self.mean_confidence_precision(final_metrics, "S(E[Nq1])")
+        final_metrics["p(S(E[Nq2]))"] = self.mean_confidence_precision(final_metrics, "S(E[Nq2])")
+        final_metrics["p(S(V[W1]))"] = self.variance_confidence_precision(clients)
+        final_metrics["p(S(V[W2]))"] = self.variance_confidence_precision(clients)
+        final_metrics["p2(S(V[W1]))"] = self.mean_confidence_precision(final_metrics, "S(V[W1])")
+        final_metrics["p2(S(V[W2]))"] = self.mean_confidence_precision(final_metrics, "S(V[W2])")
 
         self.__final_metrics = final_metrics
         self.__pd = pd.DataFrame(final_metrics.items())
@@ -124,6 +147,10 @@ class Analytics():
         self.__new_metrics["E[W2]"] = 0.0
         self.__new_metrics["V[W1]"] = 0.0
         self.__new_metrics["V[W2]"] = 0.0
+
+    def print_last_round(self):
+        _pd = pd.DataFrame(self.__metrics[len(self.__metrics) - 1].items())
+        print(_pd)
 
     def get_metrics(self):
         return self.__metrics
