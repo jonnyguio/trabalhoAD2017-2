@@ -41,6 +41,9 @@ class Analytics():
         self.__area_people_time_2 = 0
 
     def __str__(self):
+        pd.set_option('display.max_columns', None)
+        pd.set_option('display.max_rows', None)
+        self.__pd = self.__pd.sort_values(self.__pd.columns[0], ascending = False)
         return self.__pd.__str__()
 
     def mean_confidence_interval(self, samples, confidence=0.95):
@@ -70,6 +73,28 @@ class Analytics():
         b = chi2.ppf(alpha/2., n-1)
         p = (a - b)/(a + b)
         return p
+
+    def frequency_interval(self, samples, confidence=0.95):
+        ic = self.mean_confidence_interval(samples, confidence)
+        right = max(ic)
+        left  = min(ic)
+        hits = self.count_inside_interval(samples, left, right)
+        frequency = hits / len(samples)
+        return (right, left), frequency, hits, len(samples)
+
+    def count_inside_interval(self, samples, left, right):
+        total_hit = 0
+        for sample in samples:
+            total_hit += 1 if self.__inside_interval(sample, left, right) else 0
+        return total_hit
+
+    def __inside_interval(self, value, left, right):
+        if value >= left and value <= right:
+            print(value, left, right, "Hit!")
+            return True
+        else:
+            print(value, left, right)
+            return False
 
     def add_service_type(self, new_server_type):
         self.__service_type.append(new_server_type)
@@ -119,8 +144,11 @@ class Analytics():
         final_metrics["p2(S(V[W1]))"] = self.mean_confidence_precision(final_metrics, "S(V[W1])")
         final_metrics["p2(S(V[W2]))"] = self.mean_confidence_precision(final_metrics, "S(V[W2])")
 
+        final_metrics["t-student -> V[W1]"] = self.frequency_interval([metric["V[W1]"] for metric in self.__metrics])
+        final_metrics["t-student -> V[W2]"] = self.frequency_interval([metric["V[W2]"] for metric in self.__metrics])
+
         self.__final_metrics = final_metrics
-        self.__pd = pd.DataFrame(final_metrics.items())
+        self.__pd = pd.DataFrame(list(final_metrics.items()))
         return final_metrics
 
     def run_event(self, clients_now): 
@@ -164,7 +192,8 @@ class Analytics():
         self.__new_metrics["V[W2]"] = 0.0
 
     def print_last_round(self):
-        _pd = pd.DataFrame(self.__metrics[len(self.__metrics) - 1].items())
+        metrics = self.__metrics[-1]
+        _pd = pd.DataFrame(list(metrics.items()))
         print(_pd)
 
     def get_metrics(self):
