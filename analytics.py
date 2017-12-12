@@ -52,7 +52,9 @@ class Analytics():
         return (mean-e0, mean+e0)
 
     def mean_confidence_precision(self, final_metrics, metric):
-        return (final_metrics[metric][0] - final_metrics[metric][1]) / (final_metrics[metric][0] + final_metrics[metric][1])
+        upper = max(final_metrics[metric][0], final_metrics[metric][1])
+        lower = min(final_metrics[metric][0], final_metrics[metric][1])
+        return (upper - lower) / (upper + lower)
 
     def variance_confidence_interval(self, samples, confidence=0.95):
         n = len(samples)
