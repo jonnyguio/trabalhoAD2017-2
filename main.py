@@ -279,7 +279,7 @@ def simulate():
     #         line = plt.plot(lspace, metric_round[:,index], '--', linewidth=2, label='Amostra {}'.format(metric_round+1))
     #     plt.legend(loc='lower right')
     #     plt.show()
-    analytics.run(TOTAL_CLIENTS)
+    analytics.run(TOTAL_ROUNDS)
     print(analytics)
     # print(analytics.get_metrics())
     # print(analytics.get_final_metrics())

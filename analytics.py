@@ -107,7 +107,7 @@ class Analytics():
     def get_final_metrics(self):
         return self.__final_metrics
 
-    def run(self, clients):
+    def run(self, rounds):
         final_metrics = self.__metrics_base.copy()
         final_metrics["E[T1]"] = np.mean([metric["E[T1]"] for metric in self.__metrics])
         final_metrics["E[W1]"] = np.mean([metric["E[W1]"] for metric in self.__metrics])
@@ -139,10 +139,10 @@ class Analytics():
         final_metrics["p(S(E[N2]))"] = self.mean_confidence_precision(final_metrics, "S(E[N2])")
         final_metrics["p(S(E[Nq1]))"] = self.mean_confidence_precision(final_metrics, "S(E[Nq1])")
         final_metrics["p(S(E[Nq2]))"] = self.mean_confidence_precision(final_metrics, "S(E[Nq2])")
-        final_metrics["p(S(V[W1]))"] = self.variance_confidence_precision(clients)
-        final_metrics["p(S(V[W2]))"] = self.variance_confidence_precision(clients)
-        final_metrics["p2(S(V[W1]))"] = self.mean_confidence_precision(final_metrics, "S(V[W1])")
-        final_metrics["p2(S(V[W2]))"] = self.mean_confidence_precision(final_metrics, "S(V[W2])")
+        final_metrics["p(S(V[W1]))"] = self.variance_confidence_precision(rounds)
+        final_metrics["p(S(V[W2]))"] = self.variance_confidence_precision(rounds)
+        # final_metrics["p2(S(V[W1]))"] = self.mean_confidence_precision(final_metrics, "S(V[W1])")
+        # final_metrics["p2(S(V[W2]))"] = self.mean_confidence_precision(final_metrics, "S(V[W2])")
 
         final_metrics["t-student -> V[W1]"] = self.frequency_interval([metric["V[W1]"] for metric in self.__metrics])
         final_metrics["t-student -> V[W2]"] = self.frequency_interval([metric["V[W2]"] for metric in self.__metrics])
